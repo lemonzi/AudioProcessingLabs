@@ -18,6 +18,7 @@ enum
 // Number of programs (presets):
 const int NUM_PROGRAMS = 1; // only current program (NUM_PROGRAMS = 0 causes problems with some hosts)
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 MyVstPlugIn::MyVstPlugIn(audioMasterCallback audioMaster) : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMETERS)
@@ -76,15 +77,15 @@ float MyVstPlugIn::getParameter(VstInt32 index)
 	{
 		return gain_R;
 	}
-	else	if (index == GAIN_PARAM_R)
-		{
-			return gain_L;
-		}
+	else if (index == GAIN_PARAM_R)
+    {
+        return gain_L;
+    }
 	// (.. add more parameters here ..)
-		else
-		{
-			return 0.0f; // invalid index
-		}
+    else
+    {
+        return 0.0f; // invalid index
+    }
 
 }
 
@@ -96,18 +97,14 @@ void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 	{
 		vst_strncpy(label, "Gain Right", kVstMaxParamStrLen);
 	}
-	else
-	{
-		if (index == GAIN_PARAM_L)
-		{
-			vst_strncpy(label, "Gain Left", kVstMaxParamStrLen);
-		}
-		else
-		{
-			vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
-		}
-		
-	}
+	else if (index == GAIN_PARAM_L)
+    {
+        vst_strncpy(label, "Gain Left", kVstMaxParamStrLen);
+    }
+    else
+    {
+        vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+    }
 }
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
@@ -116,19 +113,14 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 	{
 		dB2string(gain_R, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
 	}
-	else
-	{
-		if (index == GAIN_PARAM_L)
-		{
-			dB2string(gain_L, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
-		}
-		else
-		{
-			vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
-		}
-		
-	}
-	
+	else if (index == GAIN_PARAM_L)
+    {
+        dB2string(gain_L, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
+    }
+    else
+    {
+        vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+    }
 }
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
@@ -182,16 +174,18 @@ void MyVstPlugIn::suspend()
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
 	float *in = inputs[0]; // alias, 'inputs' maybe contain multiple channels, see setNumInputs() in constructor
-
-
-	for (int i=0; i<2; ++i)
-	{
-		float *out = outputs[1]; // same
-		for (int j = 0; j < numSamples; ++j)
-		{
-			out[j] = in[j]*gain_; // scale each sample in in1 by a factor gain_ and store in out1
-		}
-	}
+    float *out = outputs[0]; // same
+    for (int j = 0; j < numSamples; ++j)
+    {
+        out[j] = in[j] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
+    }
+    
+    in = inputs[1]; // alias, 'inputs' maybe contain multiple channels, see setNumInputs() in constructor
+    out = outputs[1]; // same
+    for (int j = 0; j < numSamples; ++j)
+    {
+        out[j] = in[j] * GAIN_PARAM_R; // scale each sample in in1 by a factor gain_ and store in out1
+    }
 }
 
 // ---------------------------------------------------------------------------------------
