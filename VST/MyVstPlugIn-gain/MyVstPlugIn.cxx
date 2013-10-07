@@ -9,7 +9,8 @@
 // Define parameter indexes:
 enum
 {
-	GAIN_PARAM,
+	GAIN_PARAM_R,
+	GAIN_PARAM_L,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };
@@ -22,8 +23,8 @@ const int NUM_PROGRAMS = 1; // only current program (NUM_PROGRAMS = 0 causes pro
 MyVstPlugIn::MyVstPlugIn(audioMasterCallback audioMaster) : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMETERS)
 {
 	// Set some basic properties of plug-in:
-	setNumInputs(1);			// mono in
-	setNumOutputs(1);			// mono out
+	setNumInputs(2);			// stereo in
+	setNumOutputs(2);			// stereo out
 	setUniqueID('MVPI');		// unique 4 char identifier for this plug-in (here "My Vst Plug-In")
 	isSynth(false);				// this plug-in is an audio effect, not a synthesizer
 	canProcessReplacing(true);	// supports 'replacing output processing mode' (legacy stuff, always set to true)
@@ -49,7 +50,8 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(GAIN_PARAM, 1.0f); // default value of 1.0f corresponds to 0 dB
+	setParameter(GAIN_PARAM_R, 1.0f); // default value of 1.0f corresponds to 0 dB
+	setParameter(GAIN_PARAM_L, 1.0f); // default value of 1.0f corresponds to 0 dB
 	// (.. add more parameters here ..)
 }
 
@@ -57,61 +59,85 @@ void MyVstPlugIn::initParameters()
 
 void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
-	if (index == GAIN_PARAM)
+	if (index == GAIN_PARAM_R)
 	{
-		gain_ = value;
+		gain_R = value;
+	}
+	if (index == GAIN_PARAM_L)
+	{
+		gain_L = value;
 	}
 	// (.. add more parameters here ..)
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
 {
-	if (index == GAIN_PARAM)
+	if (index == GAIN_PARAM_R)
 	{
-		return gain_;
+		return gain_R;
 	}
+	else	if (index == GAIN_PARAM_R)
+		{
+			return gain_L;
+		}
 	// (.. add more parameters here ..)
-	else
-	{
-		return 0.0f; // invalid index
-	}
+		else
+		{
+			return 0.0f; // invalid index
+		}
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 {
-	if (index == GAIN_PARAM)
+	if (index == GAIN_PARAM_R)
 	{
-		vst_strncpy(label, "Gain", kVstMaxParamStrLen);
+		vst_strncpy(label, "Gain Right", kVstMaxParamStrLen);
 	}
-	// (.. add more parameters here ..)
 	else
 	{
-		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+		if (index == GAIN_PARAM_L)
+		{
+			vst_strncpy(label, "Gain Left", kVstMaxParamStrLen);
+		}
+		else
+		{
+			vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+		}
+		
 	}
 }
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
-	if (index == GAIN_PARAM)
+	if (index == GAIN_PARAM_R)
 	{
-		dB2string(gain_, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
+		dB2string(gain_R, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
 	}
-	// (.. add more parameters here ..)
 	else
 	{
-		vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+		if (index == GAIN_PARAM_L)
+		{
+			dB2string(gain_L, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
+		}
+		else
+		{
+			vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+		}
+		
 	}
+	
 }
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
-	if (index == GAIN_PARAM)
+
+	if ((index == GAIN_PARAM_R ) || (index == GAIN_PARAM_L ))
 	{
-		vst_strncpy(label, "dB", kVstMaxParamStrLen);
+			vst_strncpy(label, "dB", kVstMaxParamStrLen);
 	}
-	// (.. add more parameters here ..)
 	else
 	{
 		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
@@ -156,11 +182,15 @@ void MyVstPlugIn::suspend()
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
 	float *in = inputs[0]; // alias, 'inputs' maybe contain multiple channels, see setNumInputs() in constructor
-	float *out = outputs[0]; // same
 
-	for (int i = 0; i < numSamples; ++i)
+
+	for (int i=0; i<2; ++i)
 	{
-		out[i] = in[i]*gain_; // scale each sample in in1 by a factor gain_ and store in out1
+		float *out = outputs[1]; // same
+		for (int j = 0; j < numSamples; ++j)
+		{
+			out[j] = in[j]*gain_; // scale each sample in in1 by a factor gain_ and store in out1
+		}
 	}
 }
 
