@@ -175,8 +175,8 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
 {
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0] = inputs[0] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1] = inputs[1] * GAIN_PARAM_R; // same with right channel
+        outputs[0][j] = inputs[0][j] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[1][j] = inputs[1][j] * GAIN_PARAM_R; // same with right channel
     }
 }
 
