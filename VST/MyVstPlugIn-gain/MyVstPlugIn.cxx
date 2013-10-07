@@ -77,7 +77,7 @@ float MyVstPlugIn::getParameter(VstInt32 index)
 	{
 		return gain_R;
 	}
-	else if (index == GAIN_PARAM_R)
+	else if (index == GAIN_PARAM_L)
     {
         return gain_L;
     }
@@ -173,18 +173,10 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
-	float *in = inputs[0]; // alias, 'inputs' maybe contain multiple channels, see setNumInputs() in constructor
-    float *out = outputs[0]; // same
     for (int j = 0; j < numSamples; ++j)
     {
-        out[j] = in[j] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
-    }
-    
-    in = inputs[1]; // alias, 'inputs' maybe contain multiple channels, see setNumInputs() in constructor
-    out = outputs[1]; // same
-    for (int j = 0; j < numSamples; ++j)
-    {
-        out[j] = in[j] * GAIN_PARAM_R; // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[0] = inputs[0] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[1] = inputs[1] * GAIN_PARAM_R; // same with right channel
     }
 }
 
