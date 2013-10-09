@@ -9,8 +9,7 @@
 // Define parameter indexes:
 enum
 {
-	GAIN_PARAM_R,
-	GAIN_PARAM_L,
+	BALANCE,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };
@@ -51,8 +50,7 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(GAIN_PARAM_R, 1.0f); // default value of 1.0f corresponds to 0 dB
-	setParameter(GAIN_PARAM_L, 1.0f); // default value of 1.0f corresponds to 0 dB
+	setParameter(BALANCE, 0.5f); 
 	// (.. add more parameters here ..)
 }
 
@@ -60,28 +58,20 @@ void MyVstPlugIn::initParameters()
 
 void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
-	if (index == GAIN_PARAM_R)
+	if (index == BALANCE)
 	{
-		gain_R = value;
+		balance = value;
 	}
-	if (index == GAIN_PARAM_L)
-	{
-		gain_L = value;
-	}
-	// (.. add more parameters here ..)
+
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
 {
-	if (index == GAIN_PARAM_R)
+	if (index == BALANCE)
 	{
-		return gain_R;
+		return balance;
 	}
-	else if (index == GAIN_PARAM_L)
-    {
-        return gain_L;
-    }
-	// (.. add more parameters here ..)
+
     else
     {
         return 0.0f; // invalid index
@@ -93,14 +83,10 @@ float MyVstPlugIn::getParameter(VstInt32 index)
 
 void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 {
-	if (index == GAIN_PARAM_R)
+	if (index == BALANCE)
 	{
-		vst_strncpy(label, "Gain Right", kVstMaxParamStrLen);
+		vst_strncpy(label, "Balance", kVstMaxParamStrLen);
 	}
-	else if (index == GAIN_PARAM_L)
-    {
-        vst_strncpy(label, "Gain Left", kVstMaxParamStrLen);
-    }
     else
     {
         vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
@@ -109,14 +95,10 @@ void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
-	if (index == GAIN_PARAM_R)
+	if (index == BALANCE)
 	{
-		dB2string(gain_R, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
+		float2string(balance, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
 	}
-	else if (index == GAIN_PARAM_L)
-    {
-        dB2string(gain_L, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
-    }
     else
     {
         vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
@@ -126,9 +108,9 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
 
-	if ((index == GAIN_PARAM_R ) || (index == GAIN_PARAM_L ))
+	if (index == BALANCE )
 	{
-			vst_strncpy(label, "dB", kVstMaxParamStrLen);
+		vst_strncpy(label, "", kVstMaxParamStrLen);
 	}
 	else
 	{
@@ -173,10 +155,14 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
+
+	gain_L = balance;
+	gain_R = 1-balance;
+
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0][j] = inputs[0][j] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * GAIN_PARAM_R; // same with right channel
+        outputs[0][j] = inputs[0][j] * gain_L; // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[1][j] = inputs[1][j] * gain_R; // same with right channel
     }
 }
 
@@ -190,3 +176,4 @@ AudioEffect *createEffectInstance(audioMasterCallback audioMaster)
 	return new MyVstPlugIn(audioMaster);
 }
 
+// getsamplerate i mirar freq / periode ... mostres cicle i calcular el pas per cada mostra

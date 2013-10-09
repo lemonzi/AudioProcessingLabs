@@ -43,6 +43,7 @@ private:
 	// Parameters values:
 	float gain_R; // 0..1
 	float gain_L; // 0..1
+	float balance; // 0..1
 
 	// Program data:
 	char programName_[kVstMaxProgNameLen + 1];
