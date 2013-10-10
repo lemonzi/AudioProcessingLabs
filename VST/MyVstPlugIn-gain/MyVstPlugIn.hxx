@@ -44,6 +44,25 @@ private:
 	float gain_R; // 0..1
 	float gain_L; // 0..1
 	float balance; // 0..1
+	float fcNorm_;
+
+	// Filter coeff
+	double b0_;
+	double b1_;
+	double b2_;
+	double a0_;
+	double a1_;
+	double a2_;
+
+	// Filter states
+	double xN_;
+	double xNmin1_;
+	double xNmin2_;
+	double yN_;
+	double yNmin1_;
+	double yNmin2_;
+
+
 
 	// Program data:
 	char programName_[kVstMaxProgNameLen + 1];
