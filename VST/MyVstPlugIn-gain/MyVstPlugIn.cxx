@@ -9,7 +9,9 @@
 // Define parameter indexes:
 enum
 {
-	BALANCE,
+	GAIN_PARAM,
+	FC_PARAM,
+	Q_PARAM,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };

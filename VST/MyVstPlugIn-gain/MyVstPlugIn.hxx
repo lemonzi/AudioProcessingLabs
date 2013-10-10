@@ -45,6 +45,10 @@ private:
 	float gain_L; // 0..1
 	float balance; // 0..1
 	float fcNorm_;
+	float fc_; 
+	float q_Norm;
+	float q_;
+	
 
 	// Filter coeff
 	double b0_;
