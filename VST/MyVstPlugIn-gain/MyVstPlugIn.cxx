@@ -52,7 +52,13 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(BALANCE, 0.5f); 
+	setParameter(GAIN_PARAM, 0.5f); 
+	setParameter(FC_PARAM, 200.f); 
+	setParameter(Q_PARAM, 1.f); 
+	
+	// (.. define other parameters here ..)
+	NUM_PARAMETERS
+};
 	// (.. add more parameters here ..)
 }
 
