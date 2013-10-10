@@ -9,8 +9,10 @@
 // Define parameter indexes:
 enum
 {
-	BALANCE,
-	// (.. define other parameters here ..)
+	GAIN_PARAM,
+	FC_PARAM,
+	Q_PARAM,
+
 	NUM_PARAMETERS
 };
 
@@ -50,8 +52,9 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(BALANCE, 0.5f); 
-	// (.. add more parameters here ..)
+	setParameter(GAIN_PARAM, 0.5f); 
+	setParameter(FC_PARAM, 200.f); 
+	setParameter(Q_PARAM, 1.f); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
