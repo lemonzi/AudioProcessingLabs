@@ -9,7 +9,9 @@
 // Define parameter indexes:
 enum
 {
-	BALANCE,
+	GAIN,
+    FREQUENCY,
+    BRIGHTNESS,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };
@@ -50,7 +52,10 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(BALANCE, 0.5f); 
+	setParameter(GAIN, 1.0f); 
+	setParameter(FREQUENCY, 440.0f); 
+    setParameter(BRIGHTNESS, 1.0f);
+    phase = 0;
 	// (.. add more parameters here ..)
 }
 
@@ -58,64 +63,91 @@ void MyVstPlugIn::initParameters()
 
 void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
-	if (index == BALANCE)
-	{
-		balance = value;
-	}
-
+	switch (index) {
+        case GAIN:
+            gain = value;
+            break;
+        case FREQUENCY:
+            frequency = value * 500.0f;
+            break;
+        case BRIGHTNESS:
+            brightness = value;
+            break;
+    }
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
 {
-	if (index == BALANCE)
-	{
-		return balance;
-	}
-
-    else
-    {
-        return 0.0f; // invalid index
+    switch (index) {
+        case GAIN:
+            return gain;
+            break;
+        case FREQUENCY:
+            return frequency / 500.0f;
+            break;
+        case BRIGHTNESS:
+            return brightness;
+            break;
+        default:
+            return 0.0f; // invalid index
+            break;
     }
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 {
-	if (index == BALANCE)
-	{
-		vst_strncpy(label, "Balance", kVstMaxParamStrLen);
-	}
-    else
-    {
-        vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+    switch (index) {
+        case GAIN:
+            vst_strncpy(label, "Gain", kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            vst_strncpy(label, "Freq", kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            vst_strncpy(label, "Timbre", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+            break;
     }
 }
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
-	if (index == BALANCE)
-	{
-		float2string(balance, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
-	}
-    else
-    {
-        vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+    switch (index) {
+        case GAIN:
+            float2string(gain, text, kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            float2string(frequency, text, kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            float2string(brightness, text, kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+            break;
     }
 }
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
-
-	if (index == BALANCE )
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen);
-	}
-	else
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
-	}
+    switch (index) {
+        case GAIN:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+            break;
+    }
 }
 
 // ---------------------------------------------------------------------------------------
@@ -155,14 +187,14 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
-
-	gain_L = balance;
-	gain_R = 1-balance;
-
+    float *outL = outputs[0];
+    float *outR = outputs[1];
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0][j] = inputs[0][j] * gain_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * gain_R; // same with right channel
+        phase += (2.0f * PI * frequency / 44100.0f);
+        if (phase > 2.0f*PI) phase -= 2.0f*PI;
+        outL[j] = gain * sin(phase);
+        outR[j] = outL[j];
     }
 }
 

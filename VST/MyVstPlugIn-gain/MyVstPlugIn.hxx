@@ -5,6 +5,8 @@
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 #undef _CRT_SECURE_NO_WARNINGS
 
+#define PI 3.14159265359f
+
 // Class that implements the VST plug-in.
 //
 // Most functions implemented are virtual functions of the AudioEffect(X) baseclass.
@@ -41,9 +43,11 @@ public:
 
 private:
 	// Parameters values:
-	float gain_R; // 0..1
-	float gain_L; // 0..1
-	float balance; // 0..1
+	float gain;
+    float frequency;
+    float brightness;
+    float phase; // it's a buffer, not a parameter!
+
 
 	// Program data:
 	char programName_[kVstMaxProgNameLen + 1];
