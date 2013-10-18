@@ -5,6 +5,8 @@
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 #undef _CRT_SECURE_NO_WARNINGS
 
+#define PI 3.141592653589793f
+
 // Class that implements the VST plug-in.
 //
 // Most functions implemented are virtual functions of the AudioEffect(X) baseclass.

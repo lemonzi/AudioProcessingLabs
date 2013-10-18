@@ -155,9 +155,13 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
-
-	gain_L = balance;
-	gain_R = 1-balance;
+    // -3 dB 
+	// gain_L = cos(balance*PI/2.0f);
+	// gain_R = sin(balance*PI/2.0f);
+    
+    // -4.5 dB
+    gain_L = sqrt(balance);
+    gain_R = sqrt(1-balance);
 
     for (int j = 0; j < numSamples; ++j)
     {
