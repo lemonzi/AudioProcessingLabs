@@ -12,7 +12,6 @@ enum
 	GAIN_PARAM,
 	FC_PARAM,
 	Q_PARAM,
-
 	NUM_PARAMETERS
 };
 
@@ -65,7 +64,7 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
 	{
 		balance = value;
 	}
-
+	
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
