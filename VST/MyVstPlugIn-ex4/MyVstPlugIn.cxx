@@ -9,9 +9,9 @@
 // Define parameter indexes:
 enum
 {
-	GAIN_PARAM,
-	FC_PARAM,
-	Q_PARAM,
+	GAIN,
+    FREQUENCY,
+    BRIGHTNESS,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };
@@ -25,8 +25,8 @@ const int NUM_PROGRAMS = 1; // only current program (NUM_PROGRAMS = 0 causes pro
 MyVstPlugIn::MyVstPlugIn(audioMasterCallback audioMaster) : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMETERS)
 {
 	// Set some basic properties of plug-in:
-	setNumInputs(2);			// stereo in
-	setNumOutputs(2);			// stereo out
+	setNumInputs(1);			// mono in
+	setNumOutputs(1);			// mono out
 	setUniqueID('MVPI');		// unique 4 char identifier for this plug-in (here "My Vst Plug-In")
 	isSynth(false);				// this plug-in is an audio effect, not a synthesizer
 	canProcessReplacing(true);	// supports 'replacing output processing mode' (legacy stuff, always set to true)
@@ -52,13 +52,10 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(GAIN_PARAM, 0.5f); 
-	setParameter(FC_PARAM, 200.f); 
-	setParameter(Q_PARAM, 1.f); 
-	
-	// (.. define other parameters here ..)
-	NUM_PARAMETERS
-};
+	setParameter(GAIN, 0.7f); 
+	setParameter(FREQUENCY, 0.1f); 
+    setParameter(BRIGHTNESS, 0.0f);
+    phase = 0.0f;
 	// (.. add more parameters here ..)
 }
 
@@ -66,64 +63,93 @@ void MyVstPlugIn::initParameters()
 
 void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
-	if (index == BALANCE)
-	{
-		balance = value;
-	}
-
+	switch (index) {
+        case GAIN:
+            last_gain = gain;
+            gain = value;
+            break;
+        case FREQUENCY:
+            last_freq = frequency;
+            frequency = norm2exp(value,MIN_FREQ,MAX_FREQ);
+            break;
+        case BRIGHTNESS:
+            brightness = value;
+            break;
+    }
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
 {
-	if (index == BALANCE)
-	{
-		return balance;
-	}
-
-    else
-    {
-        return 0.0f; // invalid index
+    switch (index) {
+        case GAIN:
+            return gain;
+            break;
+        case FREQUENCY:
+            return exp2norm(frequency, MIN_FREQ, MAX_FREQ);
+            break;
+        case BRIGHTNESS:
+            return brightness;
+            break;
+        default:
+            return 0.0f; // invalid index
+            break;
     }
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 {
-	if (index == BALANCE)
-	{
-		vst_strncpy(label, "Balance", kVstMaxParamStrLen);
-	}
-    else
-    {
-        vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+    switch (index) {
+        case GAIN:
+            vst_strncpy(label, "Gain", kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            vst_strncpy(label, "Freq", kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            vst_strncpy(label, "Timbre", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+            break;
     }
 }
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
-	if (index == BALANCE)
-	{
-		float2string(balance, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
-	}
-    else
-    {
-        vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+    switch (index) {
+        case GAIN:
+            float2string(gain, text, kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            float2string(frequency, text, kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            float2string(brightness, text, kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+            break;
     }
 }
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
-
-	if (index == BALANCE )
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen);
-	}
-	else
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
-	}
+    switch (index) {
+        case GAIN:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case FREQUENCY:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case BRIGHTNESS:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+            break;
+    }
 }
 
 // ---------------------------------------------------------------------------------------
@@ -163,15 +189,17 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
-
-	gain_L = balance;
-	gain_R = 1-balance;
-
+    float *out = outputs[0];
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0][j] = inputs[0][j] * gain_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * gain_R; // same with right channel
+        float f = last_freq + (frequency - last_freq) * (j/(float)numSamples);
+        float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
+        phase += (2.0f * PI * f / (float)getSampleRate());
+        if (phase > 2.0f*PI) phase -= 2.0f*PI;
+        out[j] = g * MIN(MAX(sin(phase) * pow((1-brightness),-2),-1),1);
     }
+    last_freq = frequency;
+    last_gain = gain;
 }
 
 // ---------------------------------------------------------------------------------------
