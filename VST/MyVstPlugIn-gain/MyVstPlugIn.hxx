@@ -5,6 +5,14 @@
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 #undef _CRT_SECURE_NO_WARNINGS
 
+#define PI 3.14159265358979323f
+
+#define MIN_FREQ 20
+#define MAX_FREQ 10000
+
+#define MIN_Q 0.01
+#define MAX_Q 10
+
 // Class that implements the VST plug-in.
 //
 // Most functions implemented are virtual functions of the AudioEffect(X) baseclass.
@@ -38,31 +46,23 @@ public:
 	void resume();
 	void suspend();
 	void processReplacing(float **inputs, float **outputs, VstInt32 numSamples);
+    
+    // Private utils
+    void updateCoeffs();
 
 private:
 	// Parameters values:
-	float gain_R; // 0..1
-	float gain_L; // 0..1
-	float balance; // 0..1
-	float fcNorm_;
+	float gain; // 0..1
+	float freq; // 0..1
+	float q; // 0..1
 
 	// Filter coeff
-	double b0_;
-	double b1_;
-	double b2_;
-	double a0_;
-	double a1_;
-	double a2_;
+	double b_[3];
+	double a_[3];
 
 	// Filter states
-	double xN_;
-	double xNmin1_;
-	double xNmin2_;
-	double yN_;
-	double yNmin1_;
-	double yNmin2_;
-
-
+	double xN_[3];
+	double yN_[3];
 
 	// Program data:
 	char programName_[kVstMaxProgNameLen + 1];

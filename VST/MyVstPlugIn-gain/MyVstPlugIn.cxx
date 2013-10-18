@@ -24,8 +24,8 @@ const int NUM_PROGRAMS = 1; // only current program (NUM_PROGRAMS = 0 causes pro
 MyVstPlugIn::MyVstPlugIn(audioMasterCallback audioMaster) : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMETERS)
 {
 	// Set some basic properties of plug-in:
-	setNumInputs(2);			// stereo in
-	setNumOutputs(2);			// stereo out
+	setNumInputs(1);			// stereo in
+	setNumOutputs(1);			// stereo out
 	setUniqueID('MVPI');		// unique 4 char identifier for this plug-in (here "My Vst Plug-In")
 	isSynth(false);				// this plug-in is an audio effect, not a synthesizer
 	canProcessReplacing(true);	// supports 'replacing output processing mode' (legacy stuff, always set to true)
@@ -51,32 +51,52 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(GAIN_PARAM, 0.5f); 
-	setParameter(FC_PARAM, 200.f); 
-	setParameter(Q_PARAM, 1.f); 
+	setParameter(GAIN_PARAM, 0.7f); 
+	setParameter(FC_PARAM, 0.6f); 
+	setParameter(Q_PARAM, 0.2f); 
+    for (int i = 0; i < 3; i++) {
+        xN_[i] = 0.0f;
+        yN_[i] = 0.0f;
+    }
+    updateCoeffs();
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
-	if (index == BALANCE)
-	{
-		balance = value;
-	}
+	switch (index) {
+        case GAIN_PARAM:
+            gain = value;
+            break;
+        case FC_PARAM:
+            freq = norm2exp(value, MIN_FREQ, MAX_FREQ);
+            updateCoeffs();
+            break;
+        case Q_PARAM:
+            q = norm2lin(value, MIN_Q, MAX_Q);
+            updateCoeffs();
+            break;
+    }
 	
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
 {
-	if (index == BALANCE)
-	{
-		return balance;
-	}
-
-    else
-    {
-        return 0.0f; // invalid index
+    switch (index) {
+        case GAIN_PARAM:
+            return gain;
+            break;
+        case FC_PARAM:
+            return exp2norm(freq, MIN_FREQ, MAX_FREQ);
+            break;
+        case Q_PARAM:
+            return lin2norm(q, MIN_Q, MAX_Q);
+            break;
+        default:
+            return 0.0f; // default
+            break;
     }
 
 }
@@ -84,40 +104,59 @@ float MyVstPlugIn::getParameter(VstInt32 index)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
-{
-	if (index == BALANCE)
-	{
-		vst_strncpy(label, "Balance", kVstMaxParamStrLen);
-	}
-    else
-    {
-        vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+{    
+    switch (index) {
+        case GAIN_PARAM:
+            vst_strncpy(label, "Gain", kVstMaxParamStrLen);
+            break;
+        case FC_PARAM:
+            vst_strncpy(label, "Cutoff F", kVstMaxParamStrLen);
+            break;
+        case Q_PARAM:
+            vst_strncpy(label, "Q", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // default
+            break;
     }
+    
 }
 
 void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
-	if (index == BALANCE)
-	{
-		float2string(balance, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
-	}
-    else
-    {
-        vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
-    }
+    switch (index) {
+        case GAIN_PARAM:
+            dB2string(gain, text, kVstMaxParamStrLen);
+            break;
+        case FC_PARAM:
+            float2string(freq, text, kVstMaxParamStrLen);
+            break;
+        case Q_PARAM:
+            float2string(q, text, kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
+            break;
+    }    
+
 }
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
-
-	if (index == BALANCE )
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen);
-	}
-	else
-	{
-		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
-	}
+    switch (index) {
+        case GAIN_PARAM:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case FC_PARAM:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        case Q_PARAM:
+            vst_strncpy(label, "", kVstMaxParamStrLen);
+            break;
+        default:
+            vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
+            break;
+    }    
 }
 
 // ---------------------------------------------------------------------------------------
@@ -132,6 +171,23 @@ void MyVstPlugIn::setProgramName(char *name)
 void MyVstPlugIn::getProgramName(char *name)
 {
 	vst_strncpy(name, programName_, kVstMaxProgNameLen);
+}
+
+// ---------------------------------------------------------------------------------------
+// Private functions:
+// ---------------------------------------------------------------------------------------
+
+void MyVstPlugIn::updateCoeffs()
+{
+    float w0 = 2 * PI * freq / (float)getSampleRate();
+    float alpha = sin(w0) / (2.0f * q);
+    
+    b_[0] = (1.0f - cos(w0)) / 2.0f;
+    b_[1] = 1.0f - cos(w0);
+    b_[2] = b_[0];
+    a_[0] = 1.0f + alpha;
+    a_[1] = -2.0f * cos(w0);
+    a_[2] = 1.0f - alpha;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -158,13 +214,21 @@ void MyVstPlugIn::suspend()
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
 
-	gain_L = balance;
-	gain_R = 1-balance;
+	float *out = outputs[0];
+    float *in = inputs[0];
 
-    for (int j = 0; j < numSamples; ++j)
-    {
-        outputs[0][j] = inputs[0][j] * gain_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * gain_R; // same with right channel
+    for (int j = 0; j < numSamples; ++j) {
+        
+        xN_[2] = xN_[1];
+        xN_[1] = xN_[0];
+        xN_[0] = in[j];
+        yN_[2] = yN_[1];
+        yN_[1] = yN_[0];
+        
+        yN_[0] = (b_[0]/a_[0]) * xN_[0] + (b_[1]/a_[0]) * xN_[1] + (b_[2]/a_[0]) * xN_[2] -
+                 (a_[1]/a_[0]) * yN_[1] - (a_[2]/a_[0]) * yN_[2];
+        
+        out[j] = gain * yN_[0];
     }
 }
 
