@@ -6,6 +6,11 @@
 #undef _CRT_SECURE_NO_WARNINGS
 
 #define PI 3.14159265359f
+#define MAX_FREQ 5000.0f
+#define MIN_FREQ 50.0f
+
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#define MIN(a,b) ((a)<(b)?(a):(b))
 
 // Class that implements the VST plug-in.
 //
@@ -44,7 +49,9 @@ public:
 private:
 	// Parameters values:
 	float gain;
+    float last_gain;
     float frequency;
+    float last_freq;
     float brightness;
     float phase; // it's a buffer, not a parameter!
 

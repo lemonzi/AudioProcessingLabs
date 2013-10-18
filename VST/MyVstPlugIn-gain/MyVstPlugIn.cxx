@@ -25,8 +25,8 @@ const int NUM_PROGRAMS = 1; // only current program (NUM_PROGRAMS = 0 causes pro
 MyVstPlugIn::MyVstPlugIn(audioMasterCallback audioMaster) : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMETERS)
 {
 	// Set some basic properties of plug-in:
-	setNumInputs(2);			// stereo in
-	setNumOutputs(2);			// stereo out
+	setNumInputs(1);			// mono in
+	setNumOutputs(1);			// mono out
 	setUniqueID('MVPI');		// unique 4 char identifier for this plug-in (here "My Vst Plug-In")
 	isSynth(false);				// this plug-in is an audio effect, not a synthesizer
 	canProcessReplacing(true);	// supports 'replacing output processing mode' (legacy stuff, always set to true)
@@ -52,10 +52,10 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
-	setParameter(GAIN, 1.0f); 
-	setParameter(FREQUENCY, 440.0f); 
-    setParameter(BRIGHTNESS, 1.0f);
-    phase = 0;
+	setParameter(GAIN, 0.7f); 
+	setParameter(FREQUENCY, 0.1f); 
+    setParameter(BRIGHTNESS, 0.0f);
+    phase = 0.0f;
 	// (.. add more parameters here ..)
 }
 
@@ -65,10 +65,12 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
 	switch (index) {
         case GAIN:
+            last_gain = gain;
             gain = value;
             break;
         case FREQUENCY:
-            frequency = value * 500.0f;
+            last_freq = frequency;
+            frequency = norm2exp(value,MIN_FREQ,MAX_FREQ);
             break;
         case BRIGHTNESS:
             brightness = value;
@@ -83,7 +85,7 @@ float MyVstPlugIn::getParameter(VstInt32 index)
             return gain;
             break;
         case FREQUENCY:
-            return frequency / 500.0f;
+            return exp2norm(frequency, MIN_FREQ, MAX_FREQ);
             break;
         case BRIGHTNESS:
             return brightness;
@@ -187,15 +189,17 @@ void MyVstPlugIn::suspend()
 
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
-    float *outL = outputs[0];
-    float *outR = outputs[1];
+    float *out = outputs[0];
     for (int j = 0; j < numSamples; ++j)
     {
-        phase += (2.0f * PI * frequency / 44100.0f);
+        float f = last_freq + (frequency - last_freq) * (j/(float)numSamples);
+        float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
+        phase += (2.0f * PI * f / (float)getSampleRate());
         if (phase > 2.0f*PI) phase -= 2.0f*PI;
-        outL[j] = gain * sin(phase);
-        outR[j] = outL[j];
+        out[j] = g * MIN(MAX(sin(phase) * pow((1-brightness),-2),-1),1);
     }
+    last_freq = frequency;
+    last_gain = gain;
 }
 
 // ---------------------------------------------------------------------------------------
