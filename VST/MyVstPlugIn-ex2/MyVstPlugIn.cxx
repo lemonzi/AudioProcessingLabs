@@ -189,8 +189,8 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
     {
         float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
         float b = last_balance + (balance - last_balance) * (j/(float)numSamples);
-        outputs[0][j] = inputs[0][j] * g * sqrt(b); // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * g * sqrt(1-b); // same with right channel
+        outputs[0][j] = inputs[0][j] * g * sqrt(1-b); // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[1][j] = inputs[1][j] * g * sqrt(b); // same with right channel
     }
     last_gain = gain;
     last_balance = balance;
