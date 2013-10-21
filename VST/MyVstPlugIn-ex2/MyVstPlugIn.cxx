@@ -118,7 +118,7 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 	}
     else if (index == GAIN)
     {
-        float2string(gain, text, kVstMaxParamStrLen);
+        dB2string(gain, text, kVstMaxParamStrLen);
     }
     else
     {
@@ -128,7 +128,6 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 
 void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 {
-
 	if (index == BALANCE )
 	{
 		vst_strncpy(label, "", kVstMaxParamStrLen);

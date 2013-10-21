@@ -230,7 +230,7 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
         yN_[0] = (b_[0]/a_[0]) * xN_[0] + (b_[1]/a_[0]) * xN_[1] + (b_[2]/a_[0]) * xN_[2] -
                  (a_[1]/a_[0]) * yN_[1] - (a_[2]/a_[0]) * yN_[2];
         
-        out[j] = (gain + (gain-last_gain) * (j/(float)numSamples)) * yN_[0];
+        out[j] = (last_gain + (gain-last_gain) * (j/(float)numSamples)) * yN_[0];
     }
     last_gain = gain;
 }

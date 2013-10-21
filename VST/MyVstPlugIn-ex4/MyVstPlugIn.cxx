@@ -53,6 +53,8 @@ MyVstPlugIn::~MyVstPlugIn()
 void MyVstPlugIn::initParameters()
 {
     gain = 0.0f;
+    frequency = 0.0f;
+    brightness = 0.0f;
 	setParameter(GAIN, 0.7f); 
 	setParameter(FREQUENCY, 0.1f); 
     setParameter(BRIGHTNESS, 0.0f);
@@ -70,9 +72,11 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
             gain = value;
             break;
         case FREQUENCY:
+            last_freq = frequency;
             frequency = norm2exp(value,MIN_FREQ,MAX_FREQ);
             break;
         case BRIGHTNESS:
+            last_bright = brightness;
             brightness = value;
             break;
     }
@@ -120,7 +124,7 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 {
     switch (index) {
         case GAIN:
-            float2string(gain, text, kVstMaxParamStrLen);
+            dB2string(gain, text, kVstMaxParamStrLen);
             break;
         case FREQUENCY:
             float2string(frequency, text, kVstMaxParamStrLen);
@@ -193,11 +197,15 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
     for (int j = 0; j < numSamples; ++j)
     {
         float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
-        phase += (2.0f * PI * frequency / (float)getSampleRate());
+        float f = last_freq + (frequency - last_freq) * (j/(float)numSamples);
+        float b = last_bright + (brightness - last_bright) * (j/(float)numSamples);
+        phase += (2.0f * PI * f / (float)getSampleRate());
         if (phase > 2.0f*PI) phase -= 2.0f*PI;
-        out[j] = g * MIN(MAX(sin(phase) * pow((1-brightness),-2),-1),1);
+        out[j] = g * MIN(MAX(sin(phase) * pow((1-b),-2),-1),1);
     }
     last_gain = gain;
+    last_freq = frequency;
+    last_bright = brightness;
 }
 
 // ---------------------------------------------------------------------------------------
