@@ -42,7 +42,9 @@ public:
 private:
 	// Parameters values:
 	float gain_R; // 0..1
+    float lastGainR;
 	float gain_L; // 0..1
+    float lastGainL;
 
 	// Program data:
 	char programName_[kVstMaxProgNameLen + 1];

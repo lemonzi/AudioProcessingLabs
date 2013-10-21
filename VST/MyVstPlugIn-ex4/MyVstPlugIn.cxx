@@ -52,6 +52,7 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
+    gain = 0.0f;
 	setParameter(GAIN, 0.7f); 
 	setParameter(FREQUENCY, 0.1f); 
     setParameter(BRIGHTNESS, 0.0f);
@@ -69,7 +70,6 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
             gain = value;
             break;
         case FREQUENCY:
-            last_freq = frequency;
             frequency = norm2exp(value,MIN_FREQ,MAX_FREQ);
             break;
         case BRIGHTNESS:
@@ -192,13 +192,11 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
     float *out = outputs[0];
     for (int j = 0; j < numSamples; ++j)
     {
-        float f = last_freq + (frequency - last_freq) * (j/(float)numSamples);
         float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
-        phase += (2.0f * PI * f / (float)getSampleRate());
+        phase += (2.0f * PI * frequency / (float)getSampleRate());
         if (phase > 2.0f*PI) phase -= 2.0f*PI;
         out[j] = g * MIN(MAX(sin(phase) * pow((1-brightness),-2),-1),1);
     }
-    last_freq = frequency;
     last_gain = gain;
 }
 

@@ -53,6 +53,7 @@ public:
 private:
 	// Parameters values:
 	float gain; // 0..1
+    float last_gain;
 	float freq; // 0..1
 	float q; // 0..1
 

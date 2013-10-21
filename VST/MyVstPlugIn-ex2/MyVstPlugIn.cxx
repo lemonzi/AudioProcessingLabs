@@ -10,6 +10,7 @@
 enum
 {
 	BALANCE,
+    GAIN,
 	// (.. define other parameters here ..)
 	NUM_PARAMETERS
 };
@@ -50,7 +51,10 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
+    gain = 0.0f;
+    balance = 0.5f;
 	setParameter(BALANCE, 0.5f); 
+    setParameter(GAIN, 1.0f);
 	// (.. add more parameters here ..)
 }
 
@@ -60,9 +64,15 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
 	if (index == BALANCE)
 	{
+        last_balance = balance;
 		balance = value;
-	}
-
+	} 
+    else if (index == GAIN)
+    {
+        last_gain = gain;
+        gain = value;
+    }
+    
 }
 
 float MyVstPlugIn::getParameter(VstInt32 index)
@@ -71,7 +81,10 @@ float MyVstPlugIn::getParameter(VstInt32 index)
 	{
 		return balance;
 	}
-
+    else if (index == GAIN)
+    {
+        return gain;
+    }
     else
     {
         return 0.0f; // invalid index
@@ -87,6 +100,10 @@ void MyVstPlugIn::getParameterName(VstInt32 index, char *label)
 	{
 		vst_strncpy(label, "Balance", kVstMaxParamStrLen);
 	}
+    else if (index == GAIN)
+    {
+        vst_strncpy(label, "Gain", kVstMaxParamStrLen);
+    }
     else
     {
         vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
@@ -99,6 +116,10 @@ void MyVstPlugIn::getParameterDisplay(VstInt32 index, char *text)
 	{
 		float2string(balance, text, kVstMaxParamStrLen); // dB2string() is a VST SDK helper function that converts a linear value to dB scale and then to a string
 	}
+    else if (index == GAIN)
+    {
+        float2string(gain, text, kVstMaxParamStrLen);
+    }
     else
     {
         vst_strncpy(text, "", kVstMaxParamStrLen); // invalid index
@@ -112,6 +133,10 @@ void MyVstPlugIn::getParameterLabel(VstInt32 index, char *label)
 	{
 		vst_strncpy(label, "", kVstMaxParamStrLen);
 	}
+    else if (index == GAIN)
+    {
+        vst_strncpy(label, "", kVstMaxParamStrLen);
+    }
 	else
 	{
 		vst_strncpy(label, "", kVstMaxParamStrLen); // invalid index
@@ -156,18 +181,19 @@ void MyVstPlugIn::suspend()
 void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 numSamples)
 {
     // -3 dB 
-	// gain_L = cos(balance*PI/2.0f);
-	// gain_R = sin(balance*PI/2.0f);
+	// float gain_L = cos(balance*PI/2.0f);
+	// float gain_R = sin(balance*PI/2.0f);
     
     // -4.5 dB
-    gain_L = sqrt(balance);
-    gain_R = sqrt(1-balance);
-
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0][j] = inputs[0][j] * gain_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * gain_R; // same with right channel
+        float g = last_gain + (gain - last_gain) * (j/(float)numSamples);
+        float b = last_balance + (balance - last_balance) * (j/(float)numSamples);
+        outputs[0][j] = inputs[0][j] * g * sqrt(b); // scale each sample in in1 by a factor gain_ and store in out1
+        outputs[1][j] = inputs[1][j] * g * sqrt(1-b); // same with right channel
     }
+    last_gain = gain;
+    last_balance = balance;
 }
 
 // ---------------------------------------------------------------------------------------

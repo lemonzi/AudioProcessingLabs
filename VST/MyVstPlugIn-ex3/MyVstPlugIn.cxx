@@ -51,6 +51,7 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
+    gain = 0.0f;
 	setParameter(GAIN_PARAM, 0.7f); 
 	setParameter(FC_PARAM, 0.6f); 
 	setParameter(Q_PARAM, 0.2f); 
@@ -68,6 +69,7 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
 	switch (index) {
         case GAIN_PARAM:
+            last_gain = gain;
             gain = value;
             break;
         case FC_PARAM:
@@ -228,8 +230,9 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
         yN_[0] = (b_[0]/a_[0]) * xN_[0] + (b_[1]/a_[0]) * xN_[1] + (b_[2]/a_[0]) * xN_[2] -
                  (a_[1]/a_[0]) * yN_[1] - (a_[2]/a_[0]) * yN_[2];
         
-        out[j] = gain * yN_[0];
+        out[j] = (gain + (gain-last_gain) * (j/(float)numSamples)) * yN_[0];
     }
+    last_gain = gain;
 }
 
 // ---------------------------------------------------------------------------------------

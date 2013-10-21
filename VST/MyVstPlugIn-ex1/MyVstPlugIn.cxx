@@ -51,9 +51,10 @@ MyVstPlugIn::~MyVstPlugIn()
 
 void MyVstPlugIn::initParameters()
 {
+    gain_L = 0.0f;
+    gain_R = 0.0f;
 	setParameter(GAIN_PARAM_R, 1.0f); // default value of 1.0f corresponds to 0 dB
 	setParameter(GAIN_PARAM_L, 1.0f); // default value of 1.0f corresponds to 0 dB
-	// (.. add more parameters here ..)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -62,10 +63,12 @@ void MyVstPlugIn::setParameter(VstInt32 index, float value)
 {
 	if (index == GAIN_PARAM_R)
 	{
+        lastGainR = gain_R;
 		gain_R = value;
 	}
 	if (index == GAIN_PARAM_L)
 	{
+        lastGainL = gain_L;
 		gain_L = value;
 	}
 	// (.. add more parameters here ..)
@@ -175,9 +178,13 @@ void MyVstPlugIn::processReplacing(float **inputs, float **outputs, VstInt32 num
 {
     for (int j = 0; j < numSamples; ++j)
     {
-        outputs[0][j] = inputs[0][j] * GAIN_PARAM_L; // scale each sample in in1 by a factor gain_ and store in out1
-        outputs[1][j] = inputs[1][j] * GAIN_PARAM_R; // same with right channel
+        float gl = lastGainL + (gain_L - lastGainL) * (j/(float)numSamples);
+        outputs[0][j] = inputs[0][j] * gl; // scale each sample in in1 by a factor gain_ and store in out1
+        float gr = lastGainR + (gain_R - lastGainR) * (j/(float)numSamples);
+        outputs[1][j] = inputs[1][j] * gr; // same with right channel
     }
+    lastGainL = gain_L;
+    lastGainR = gain_R;
 }
 
 // ---------------------------------------------------------------------------------------

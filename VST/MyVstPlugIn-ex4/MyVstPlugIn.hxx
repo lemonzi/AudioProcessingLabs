@@ -51,7 +51,6 @@ private:
 	float gain;
     float last_gain;
     float frequency;
-    float last_freq;
     float brightness;
     float phase; // it's a buffer, not a parameter!
 
