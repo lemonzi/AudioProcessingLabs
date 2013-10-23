@@ -1,0 +1,18 @@
+#N canvas -7 0 656 369 10;
+#X text 911 510 updated for Pd version 0.33;
+#X msg 138 107 clear;
+#X obj 33 25 inlet;
+#X obj 212 28 inlet;
+#X text 211 8 el_time;
+#X obj 32 274 textfile;
+#X msg 33 105 add \$1;
+#X text 33 10 var;
+#X obj 212 69 t b f;
+#X msg 239 106 write data/data_rtime_eltime-\$1.txt;
+#X connect 1 0 5 0;
+#X connect 2 0 6 0;
+#X connect 3 0 8 0;
+#X connect 6 0 5 0;
+#X connect 8 0 1 0;
+#X connect 8 1 9 0;
+#X connect 9 0 5 0;
