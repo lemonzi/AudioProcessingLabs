@@ -17,7 +17,8 @@ for i = 1:numel(methods)
         disp(filename);
         x = load(filename);
         % Do whatever you want with the data
-        plot(x, colors(j));
+        disp(mean(x))
+        plot(x - mean(x));
 
     end    
 end
