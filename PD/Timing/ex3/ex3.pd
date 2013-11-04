@@ -1,0 +1,17 @@
+#N canvas 615 22 259 248 10;
+#X obj 98 117 ead~ 0 10;
+#X obj 67 160 *~;
+#X obj 57 193 dac~;
+#X obj 48 119 noise~;
+#X msg 98 88 bang;
+#X obj 33 35 key;
+#X msg 98 37 bang;
+#X obj 175 37 ctlin;
+#X connect 0 0 1 1;
+#X connect 1 0 2 0;
+#X connect 1 0 2 1;
+#X connect 3 0 1 0;
+#X connect 4 0 0 0;
+#X connect 5 0 4 0;
+#X connect 6 0 4 0;
+#X connect 7 0 4 0;

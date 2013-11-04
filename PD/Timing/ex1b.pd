@@ -1,0 +1,26 @@
+#N canvas 640 22 640 752 10;
+#X obj 123 33 bang~;
+#X obj 96 90 realtime;
+#X obj 96 164 print RTM;
+#X msg 45 90 clear;
+#X obj 159 141 print RT;
+#X obj 164 111 print T;
+#X obj 163 90 timer;
+#X obj 266 45 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+1;
+#X msg 266 69 \; pd dsp \$1;
+#X obj 123 55 t b b b b;
+#X obj 266 21 loadbang;
+#X obj 96 142 mean;
+#X connect 0 0 9 0;
+#X connect 1 0 4 0;
+#X connect 1 0 11 0;
+#X connect 3 0 11 0;
+#X connect 6 0 5 0;
+#X connect 7 0 8 0;
+#X connect 9 0 1 0;
+#X connect 9 1 1 1;
+#X connect 9 2 6 0;
+#X connect 9 3 6 1;
+#X connect 10 0 7 0;
+#X connect 11 0 2 0;
