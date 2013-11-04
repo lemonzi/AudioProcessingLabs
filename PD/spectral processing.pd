@@ -1,0 +1,10 @@
+#N canvas 315 204 648 341 10;
+#X obj 61 191 block~ 1024 4;
+#X text 31 30 blocks llargs amb overlap per fer processing espectral
+;
+#X text 30 54 nomes on hi hagi processament!;
+#X text 29 78 per comunicar seccions amb diferent blocksize calen inlets/outlets
+;
+#X text 29 114 Els send \, catch \, .... no funcionen;
+#X text 29 138 La instrucció block s'aplica al patch on està i als
+seus fills;
